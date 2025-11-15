@@ -1,6 +1,7 @@
 import "./App.css";
 import { useEffect, useState, useRef } from "react";
 import { Person, type PersonProps } from "./components/Person";
+import { NavButton } from "./components/NavButton";
 
 let baseUrl: string = "https://api.themoviedb.org/3/search/person";
 let apiKey = import.meta.env.VITE_API_KEY;
@@ -8,7 +9,7 @@ let apiKey = import.meta.env.VITE_API_KEY;
 function App() {
   const [people, setPeople] = useState<PersonProps[]>([]);
   const [query, setQuery] = useState<string>("");
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,21 +37,6 @@ function App() {
     }
   }, [page, query]);
 
-  const handleNextPage = () => {
-    if (page + 1 > totalPages) {
-      console.log("no more reults");
-    } else {
-      setPage(page + 1);
-    }
-  };
-  const handlePrevPage = () => {
-    if (page - 1 < 1) {
-      console.log("you are at the first page");
-    } else {
-      setPage(page - 1);
-    }
-  };
-
   return (
     <>
       <input ref={inputRef} type="text" placeholder="Search for a name" />
@@ -69,8 +55,43 @@ function App() {
         />
       ))}
 
-      <button onClick={handlePrevPage}>prev page</button>
-      <button onClick={handleNextPage}>next page</button>
+      {totalPages > 0 && (
+        <>
+          <NavButton
+            key={1}
+            pageNumber={1}
+            isCurrent={page === 1}
+            onClick={() => setPage(1)}
+          />
+        </>
+      )}
+
+      {Array.from({ length: 5 }, (_, i) => {
+        const pageNum = page - 2 + i;
+        console.log(page);
+        if (pageNum == 1 || pageNum < 1 || pageNum > totalPages) {
+          return null;
+        }
+        return (
+          <NavButton
+            key={pageNum}
+            pageNumber={pageNum}
+            isCurrent={pageNum === page}
+            onClick={() => setPage(pageNum)}
+          />
+        );
+      })}
+
+      {totalPages > 0 && (
+        <>
+          <NavButton
+            key={totalPages}
+            pageNumber={totalPages}
+            isCurrent={page === totalPages}
+            onClick={() => setPage(totalPages)}
+          />
+        </>
+      )}
     </>
   );
 }
