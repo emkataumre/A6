@@ -1,23 +1,78 @@
 import "./App.css";
-import { useEffect, useState } from "react";
-import type { PersonProps } from "./components/Person";
+import { useEffect, useState, useRef } from "react";
+import { Person, type PersonProps } from "./components/Person";
 
 let baseUrl: string = "https://api.themoviedb.org/3/search/person";
-let query: string = "hanks";
 let apiKey = import.meta.env.VITE_API_KEY;
 
 function App() {
-  const [person, setPerson] = useState<PersonProps>({});
+  const [people, setPeople] = useState<PersonProps[]>([]);
+  const [query, setQuery] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = () => {
+    if (inputRef.current?.value) {
+      const newQuery = inputRef.current.value;
+      setQuery(newQuery);
+      setPage(page);
+    }
+  };
+
   useEffect(() => {
-    fetch(`${baseUrl}?query=${query}&api_key=${apiKey}`)
-      .then((res) => res.json())
-      .then((data) => setPerson(data));
-  }, []);
+    if (query !== "") {
+      fetch(`${baseUrl}?query=${query}&api_key=${apiKey}&page=${page}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(
+            `${baseUrl}?query=${query}&api_key=${apiKey}&page=${page}`
+          );
 
-  console.log(`${baseUrl}?query=${query}&api_key=${apiKey}`);
-  console.log(person);
+          console.log(data);
+          setPeople(data.results || []);
+          setTotalPages(data.total_pages);
+        });
+    }
+  }, [page, query]);
 
-  return <></>;
+  const handleNextPage = () => {
+    if (page + 1 > totalPages) {
+      console.log("no more reults");
+    } else {
+      setPage(page + 1);
+    }
+  };
+  const handlePrevPage = () => {
+    if (page - 1 < 1) {
+      console.log("you are at the first page");
+    } else {
+      setPage(page - 1);
+    }
+  };
+
+  return (
+    <>
+      <input ref={inputRef} type="text" placeholder="Search for a name" />
+
+      <button onClick={handleSubmit}>Submit</button>
+
+      {people?.map((person: PersonProps) => (
+        <Person
+          key={person.id}
+          id={person.id}
+          name={person.name}
+          known_for_department={person.known_for_department}
+          //profile_path={person.profile_path}
+          popularity={person.popularity}
+          known_for={person.known_for}
+        />
+      ))}
+
+      <button onClick={handlePrevPage}>prev page</button>
+      <button onClick={handleNextPage}>next page</button>
+    </>
+  );
 }
 
 export default App;
